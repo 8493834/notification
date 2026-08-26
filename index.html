@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDlAr0gu2GWrzKbguT9b__XR33uRaNiPmc",
+    authDomain: "studio-3498873837-9013b.firebaseapp.com",
+    projectId: "studio-3498873837-9013b",
+    storageBucket: "studio-3498873837-9013b.firebasestorage.app",
+    messagingSenderId: "149411115279",
+    appId: "1:149411115279:web:bfd9103fc368312122ce7a"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>   
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Dashboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .hidden { display: none; }
+    input, select, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
+    button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: #0056b3; }
+    #allow-notifications { background-color: #28a745; }
+  </style>
+</head>
+<body>
+
+<div class="container" id="login-section">
+  <h2>Admin Login</h2>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="password" placeholder="Password" required>
+  <button id="login-btn">Log In</button>
+  <p id="login-error" style="color: red;"></p>
+</div>
+
+<div class="container hidden" id="dashboard-section">
+  <h2>Notification Console</h2>
+  <button id="allow-notifications">Allow Notifications</button>
+  <hr>
+  
+  <label for="importance">Importance (0-10):</label>
+  <input type="number" id="importance" min="0" max="10" value="5">
+
+  <label for="title">Title:</label>
+  <input type="text" id="title" placeholder="Notification Title">
+
+  <label for="body">Message Body:</label>
+  <textarea id="body" rows="3" placeholder="Notification Body"></textarea>
+
+  <label for="link">Click Link URL:</label>
+  <input type="url" id="link" placeholder="https://example.com">
+
+  <button id="send-btn">Send Notification</button>
+  <button id="logout-btn" style="background-color: #dc3545; margin-top: 10px;">Log Out</button>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getMessaging, requestPermission, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDSuWbZK_RmUdkagSViM2P1cy4i91KsrQ",
+    authDomain: "jokitmas8493834.firebaseapp.com",
+    projectId: "jokitmas8493834",
+    storageBucket: "jokitmas8493834.firebasestorage.app",
+    messagingSenderId: "753448833597",
+    appId: "1:753448833597:web:d18de17e9cb28b380f5054",
+    measurementId: "G-M3KLGPHS8V"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  let messaging;
+  
+  // Try to initialize messaging (only works on secure origins like localhost or HTTPS)
+  try {
+      messaging = getMessaging(app);
+  } catch (e) {
+      console.log("Messaging not supported in this environment");
+  }
+
+  // UI Elements
+  const loginSection = document.getElementById('login-section');
+  const dashboardSection = document.getElementById('dashboard-section');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const allowNotificationsBtn = document.getElementById('allow-notifications');
+  const sendBtn = document.getElementById('send-btn');
+
+  // Authentication State Observer
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loginSection.classList.add('hidden');
+      dashboardSection.classList.remove('hidden');
+    } else {
+      loginSection.classList.remove('hidden');
+      dashboardSection.classList.add('hidden');
+    }
+  });
+
+  // Login Logic
+  loginBtn.addEventListener('click', () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    signInWithEmailAndPassword(auth, email, password)
+      .catch((error) => {
+        document.getElementById('login-error').innerText = "Incorrect email or password.";
+      });
+  });
+
+  // Logout Logic
+  logoutBtn.addEventListener('click', () => {
+    signOut(auth);
+  });
+
+  // Request Notification Permission
+  allowNotificationsBtn.addEventListener('click', async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        alert("Notifications allowed!");
+        // Note: To get an FCM token here, you'd need to set up a Service Worker
+      } else {
+        alert("Notification permission denied.");
+      }
+    } catch (error) {
+      console.error("Error requesting permission", error);
+    }
+  });
+
+  sendBtn.addEventListener('click', async () => {
+  const title = document.getElementById('title').value;
+  const body = document.getElementById('body').value;
+  const link = document.getElementById('link').value;
+
+  sendBtn.innerText = "Sending...";
+  sendBtn.disabled = true;
+
+  try {
+    await sendSecureNotification({ title, body, link });
+    alert("Notification sent successfully!");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to send: " + error.message);
+  } finally {
+    sendBtn.innerText = "Send Notification";
+    sendBtn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
