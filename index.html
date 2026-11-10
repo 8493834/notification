@@ -1,265 +1,117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification Dashboard</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .hidden { display: none; }
-    input, select, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background-color: #0056b3; }
-    #allow-notifications { background-color: #28a745; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beacon — get notified</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12181f; --surface: #1b232c; --line: #2c3742;
+    --text: #edeee7; --muted: #8b95a1;
+    --amber: #e8a33d; --amber-dim: #6b5127; --teal: #4fa893; --red: #d9695f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+  header { border-bottom: 1px solid var(--line); padding: 24px 0; }
+  header .wrap { display: flex; justify-content: space-between; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 700 18px 'Archivo', sans-serif; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-dim); }
+  .pill { font: 12px 'Space Mono', monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 5px 10px; }
+  .pill.on { color: var(--teal); border-color: var(--teal); }
+  .pill.err { color: var(--red); border-color: var(--red); }
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; align-items: center; padding: 88px 0; }
+  h1 { font: 800 54px/1.05 'Archivo', sans-serif; letter-spacing: -0.02em; margin: 0; max-width: 12ch; }
+  .lede { color: var(--muted); font-size: 18px; max-width: 46ch; margin: 22px 0 34px; }
+  button { font: 600 15px 'Inter', sans-serif; background: var(--amber); color: #1a1305; border: 0; border-radius: 3px; padding: 13px 22px; cursor: pointer; }
+  button:hover { background: #f0ad4d; }
+  button:disabled { background: #232c36; color: var(--muted); cursor: default; }
+  button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .note { display: inline-block; margin-left: 14px; font-size: 13px; color: var(--muted); }
+  svg { width: 100%; max-width: 380px; margin: 0 auto; display: block; }
+  .ping { animation: ping 2.6s cubic-bezier(.2,.7,.4,1) infinite; }
+  .ping.b { animation-delay: .8s; } .ping.c { animation-delay: 1.6s; }
+  @keyframes ping { from { r: 20; opacity: .7; } to { r: 160; opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .ping { animation: none; opacity: .15; } }
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding: 48px 0; } h1 { font-size: 38px; }
+    svg { order: -1; max-width: 240px; } .note { display: block; margin: 12px 0 0; }
+  }
+</style>
 </head>
 <body>
+<header><div class="wrap">
+  <div class="brand"><span class="dot"></span> Beacon</div>
+  <div class="pill" id="pill">checking…</div>
+</div></header>
 
-<div class="container" id="login-section">
-  <h2>Admin Login</h2>
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="password" placeholder="Password" required>
-  <button id="login-btn">Log In</button>
-  <p id="login-error" style="color: red;"></p>
-</div>
+<main class="wrap hero">
+  <div>
+    <h1>Get word the moment it goes out.</h1>
+    <p class="lede">Turn on notifications once. Whatever gets sent reaches you directly, even when this tab is closed.</p>
+    <button id="btn">Turn on notifications</button>
+    <span class="note" id="note">Works in Chrome, Edge, Firefox and Android. On iPhone, add this site to your Home Screen first.</span>
+  </div>
+  <svg viewBox="0 0 400 400" aria-hidden="true">
+    <circle class="ping" cx="200" cy="200" r="20" fill="none" stroke="#e8a33d" stroke-width="1.5"/>
+    <circle class="ping b" cx="200" cy="200" r="20" fill="none" stroke="#e8a33d" stroke-width="1.5"/>
+    <circle class="ping c" cx="200" cy="200" r="20" fill="none" stroke="#e8a33d" stroke-width="1.5"/>
+    <circle cx="200" cy="200" r="46" fill="#1b232c" stroke="#2c3742"/>
+    <circle cx="200" cy="200" r="10" fill="#e8a33d"/>
+  </svg>
+</main>
 
-<div class="container hidden" id="dashboard-section">
-  <h2>Notification Console</h2>
-  <button id="allow-notifications">Allow Notifications</button>
-  <hr>
-  
-  <label for="importance">Importance (0-10):</label>
-  <input type="number" id="importance" min="0" max="10" value="5">
+<footer class="wrap" style="padding:0 28px 32px;font-size:13px;"><a href="admin.html" style="color:var(--muted)">Admin</a></footer>
 
-  <label for="title">Title:</label>
-  <input type="text" id="title" placeholder="Notification Title">
+<script>
+  // ── Fill these two in (see README) ──────────────────────────────
+  const PUSH_SERVER_URL = "https://YOUR-MACHINE.your-tailnet.ts.net";
+  const VAPID_PUBLIC_KEY = "PASTE_PUBLIC_KEY_FROM_setup_keys.py";
+  // ────────────────────────────────────────────────────────────────
 
-  <label for="body">Message Body:</label>
-  <textarea id="body" rows="3" placeholder="Notification Body"></textarea>
+  const pill = document.getElementById('pill');
+  const btn = document.getElementById('btn');
+  const note = document.getElementById('note');
 
-  <label for="link">Click Link URL:</label>
-  <input type="url" id="link" placeholder="https://example.com">
+  function setState(text, cls, disable) {
+    pill.textContent = text; pill.className = 'pill ' + (cls || '');
+    btn.disabled = !!disable;
+  }
 
-  <button id="send-btn">Send Notification</button>
-  <button id="logout-btn" style="background-color: #dc3545; margin-top: 10px;">Log Out</button>
-</div>
+  function b64ToBytes(s) {
+    const pad = '='.repeat((4 - s.length % 4) % 4);
+    const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  }
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+  async function init() {
+    if (VAPID_PUBLIC_KEY.startsWith('PASTE_')) { setState('not configured', 'err', true); note.textContent = 'Set VAPID_PUBLIC_KEY and PUSH_SERVER_URL in index.html.'; return; }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setState('not supported', 'err', true); note.textContent = 'This browser does not support push notifications.'; return; }
+    const reg = await navigator.serviceWorker.register('sw.js');
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) { setState('notifications on', 'on', true); btn.textContent = 'Notifications on'; note.textContent = "You're all set."; }
+    else setState('notifications off');
+  }
 
-  
-  const firebaseConfig = {
-    apiKey: "AIzaSyDDSuWbZK_RmUdkagSViM2P1cy4i91KsrQ",
-    authDomain: "jokitmas8493834.firebaseapp.com",
-    projectId: "jokitmas8493834",
-    storageBucket: "jokitmas8493834.firebasestorage.app",
-    messagingSenderId: "753448833597",
-    appId: "1:753448833597:web:d18de17e9cb28b380f5054",
-    measurementId: "G-M3KLGPHS8V"
-  
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const functions = getFunctions(app);
-  const sendSecureNotification = httpsCallable(functions, 'sendNotification');
-
-  // UI Elements
-  const loginSection = document.getElementById('login-section');
-  const dashboardSection = document.getElementById('dashboard-section');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const allowNotificationsBtn = document.getElementById('allow-notifications');
-  const sendBtn = document.getElementById('send-btn');
-
-  // Authentication State Observer
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      loginSection.classList.add('hidden');
-      dashboardSection.classList.remove('hidden');
-    } else {
-      loginSection.classList.remove('hidden');
-      dashboardSection.classList.add('hidden');
-    }
-  });
-
-  // Login & Logout
-  loginBtn.addEventListener('click', () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    signInWithEmailAndPassword(auth, email, password)
-      .catch((error) => {
-        document.getElementById('login-error').innerText = "Incorrect email or password.";
-      });
-  });
-
-  logoutBtn.addEventListener('click', () => signOut(auth));
-
-  // Request Permission
-  allowNotificationsBtn.addEventListener('click', async () => {
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; btn.textContent = 'Requesting…';
     try {
-      const permission = await Notification.requestPermission();
-      alert(permission === 'granted' ? "Notifications allowed!" : "Notification permission denied.");
-    } catch (error) {
-      console.error("Error requesting permission", error);
+      if (await Notification.requestPermission() !== 'granted') throw new Error('Permission was not granted. Check your browser settings.');
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC_KEY) });
+      const res = await fetch(PUSH_SERVER_URL + '/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+      if (!res.ok) { await sub.unsubscribe(); throw new Error('Could not reach the server (' + res.status + ').'); }
+      setState('notifications on', 'on', true); btn.textContent = 'Notifications on'; note.textContent = "You're all set.";
+    } catch (e) {
+      note.textContent = e.message || 'Something went wrong.';
+      btn.disabled = false; btn.textContent = 'Turn on notifications';
     }
   });
 
-  // Send Secure Notification
-  sendBtn.addEventListener('click', async () => {
-    const title = document.getElementById('title').value;
-    const body = document.getElementById('body').value;
-    const link = document.getElementById('link').value;
-
-    sendBtn.innerText = "Sending...";
-    sendBtn.disabled = true;
-
-    try {
-      await sendSecureNotification({ title, body, link });
-      alert("Notification sent successfully!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to send: " + error.message);
-    } finally {
-      sendBtn.innerText = "Send Notification";
-      sendBtn.disabled = false;
-    }
-  });
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification Dashboard</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .hidden { display: none; }
-    input, select, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background-color: #0056b3; }
-    #allow-notifications { background-color: #28a745; }
-  </style>
-</head>
-<body>
-
-<div class="container" id="login-section">
-  <h2>Admin Login</h2>
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="password" placeholder="Password" required>
-  <button id="login-btn">Log In</button>
-  <p id="login-error" style="color: red;"></p>
-</div>
-
-<div class="container hidden" id="dashboard-section">
-  <h2>Notification Console</h2>
-  <button id="allow-notifications">Allow Notifications</button>
-  <hr>
-  
-  <label for="importance">Importance (0-10):</label>
-  <input type="number" id="importance" min="0" max="10" value="5">
-
-  <label for="title">Title:</label>
-  <input type="text" id="title" placeholder="Notification Title">
-
-  <label for="body">Message Body:</label>
-  <textarea id="body" rows="3" placeholder="Notification Body"></textarea>
-
-  <label for="link">Click Link URL:</label>
-  <input type="url" id="link" placeholder="https://example.com">
-
-  <button id="send-btn">Send Notification</button>
-  <button id="logout-btn" style="background-color: #dc3545; margin-top: 10px;">Log Out</button>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-
-  
-  const firebaseConfig = {
-    apiKey: "AIzaSyDDSuWbZK_RmUdkagSViM2P1cy4i91KsrQ",
-    authDomain: "jokitmas8493834.firebaseapp.com",
-    projectId: "jokitmas8493834",
-    storageBucket: "jokitmas8493834.firebasestorage.app",
-    messagingSenderId: "753448833597",
-    appId: "1:753448833597:web:d18de17e9cb28b380f5054",
-    measurementId: "G-M3KLGPHS8V"
-  
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const functions = getFunctions(app);
-  const sendSecureNotification = httpsCallable(functions, 'sendNotification');
-
-  // UI Elements
-  const loginSection = document.getElementById('login-section');
-  const dashboardSection = document.getElementById('dashboard-section');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const allowNotificationsBtn = document.getElementById('allow-notifications');
-  const sendBtn = document.getElementById('send-btn');
-
-  // Authentication State Observer
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      loginSection.classList.add('hidden');
-      dashboardSection.classList.remove('hidden');
-    } else {
-      loginSection.classList.remove('hidden');
-      dashboardSection.classList.add('hidden');
-    }
-  });
-
-  // Login & Logout
-  loginBtn.addEventListener('click', () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    signInWithEmailAndPassword(auth, email, password)
-      .catch((error) => {
-        document.getElementById('login-error').innerText = "Incorrect email or password.";
-      });
-  });
-
-  logoutBtn.addEventListener('click', () => signOut(auth));
-
-  // Request Permission
-  allowNotificationsBtn.addEventListener('click', async () => {
-    try {
-      const permission = await Notification.requestPermission();
-      alert(permission === 'granted' ? "Notifications allowed!" : "Notification permission denied.");
-    } catch (error) {
-      console.error("Error requesting permission", error);
-    }
-  });
-
-  // Send Secure Notification
-  sendBtn.addEventListener('click', async () => {
-    const title = document.getElementById('title').value;
-    const body = document.getElementById('body').value;
-    const link = document.getElementById('link').value;
-
-    sendBtn.innerText = "Sending...";
-    sendBtn.disabled = true;
-
-    try {
-      await sendSecureNotification({ title, body, link });
-      alert("Notification sent successfully!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to send: " + error.message);
-    } finally {
-      sendBtn.innerText = "Send Notification";
-      sendBtn.disabled = false;
-    }
-  });
+  init();
 </script>
 </body>
 </html>

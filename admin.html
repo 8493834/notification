@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beacon — admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#12181f; --surface:#1b232c; --surface2:#232c36; --line:#2c3742; --text:#edeee7; --muted:#8b95a1; --amber:#e8a33d; --teal:#4fa893; --red:#d9695f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:640px; margin:0 auto; padding:48px 24px 80px; }
+  .brand { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:600; color:var(--muted); margin-bottom:32px; }
+  .brand a { color:var(--muted); text-decoration:none; } .brand a:hover { color:var(--text); }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  h1 { font:700 26px 'Archivo',sans-serif; margin:0 0 6px; }
+  .sub { color:var(--muted); font-size:14.5px; margin:0 0 32px; }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:28px; }
+  label { display:block; font-size:13px; font-weight:600; margin:20px 0 8px; } label:first-child { margin-top:0; }
+  input, textarea { width:100%; background:var(--surface2); border:1px solid var(--line); border-radius:3px; color:var(--text); font:14.5px 'Inter',sans-serif; padding:11px 12px; }
+  textarea { resize:vertical; min-height:84px; }
+  input::placeholder, textarea::placeholder { color:#5b6570; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+  button { margin-top:26px; font:600 14.5px 'Inter',sans-serif; background:var(--amber); color:#1a1305; border:0; border-radius:3px; padding:12px 20px; cursor:pointer; }
+  button:hover { background:#f0ad4d; } button:disabled { background:var(--surface2); color:var(--muted); cursor:default; }
+  .msg { display:none; margin-top:18px; padding:10px 12px; border-radius:3px; font-size:13.5px; }
+  .msg.show { display:block; }
+  .ok { background:rgba(79,168,147,.12); border:1px solid var(--teal); color:var(--teal); }
+  .err { background:rgba(217,105,95,.12); border:1px solid var(--red); color:var(--red); }
+  details { margin-top:20px; border:1px solid var(--line); border-radius:3px; padding:16px 20px; }
+  summary { cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); }
+  details[open] summary { margin-bottom:14px; }
+  details label { font-size:12.5px; margin-top:0; }
+  .hint { color:var(--muted); font-size:12.5px; margin:10px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="dot"></span> <a href="index.html">Beacon</a> <span>/ admin</span></div>
+  <h1>Send a notification</h1>
+  <p class="sub">Goes out immediately to everyone subscribed. Your Linux machine must be on and running server.py.</p>
+
+  <div class="panel">
+    <label for="key">Admin key</label>
+    <input id="key" type="password" autocomplete="off" placeholder="The ADMIN_KEY you set on the server">
+
+    <label for="title">Title</label>
+    <input id="title" type="text" maxlength="60" placeholder="e.g. New post is up">
+
+    <label for="message">Message</label>
+    <textarea id="message" maxlength="180" placeholder="What do you want people to know?"></textarea>
+
+    <label for="url">Link when tapped (optional)</label>
+    <input id="url" type="url" placeholder="https://…">
+
+    <button id="send">Send notification</button>
+    <div class="msg" id="msg" role="status"></div>
+  </div>
+
+  <details>
+    <summary>Server address</summary>
+    <label for="server">Your Tailscale URL</label>
+    <input id="server" type="url" placeholder="https://mybox.tail1234.ts.net">
+    <p class="hint">Saved in this browser only. Leave blank to use the default set in the file.</p>
+  </details>
+</div>
+
+<script>
+  // Default server address (same as PUSH_SERVER_URL in index.html)
+  const DEFAULT_SERVER = "https://YOUR-MACHINE.your-tailnet.ts.net";
+
+  const $ = (id) => document.getElementById(id);
+  const msg = $('msg'), sendBtn = $('send');
+
+  try { $('server').value = localStorage.getItem('beacon_server') || ''; } catch (e) {}
+  $('server').addEventListener('change', () => {
+    try { localStorage.setItem('beacon_server', $('server').value.trim()); } catch (e) {}
+  });
+
+  function show(text, ok) { msg.textContent = text; msg.className = 'msg show ' + (ok ? 'ok' : 'err'); }
+
+  sendBtn.addEventListener('click', async () => {
+    const server = ($('server').value.trim() || DEFAULT_SERVER).replace(/\/+$/, '');
+    const key = $('key').value;
+    const message = $('message').value.trim();
+    if (server.includes('YOUR-MACHINE')) return show('Set your server address (below, or in the file).', false);
+    if (!key) return show('Enter your admin key.', false);
+    if (!message) return show('Write a message first.', false);
+
+    sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
+    try {
+      const res = await fetch(server + '/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        body: JSON.stringify({ title: $('title').value.trim(), message, url: $('url').value.trim() || undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Send failed (' + res.status + ')');
+      let text = 'Sent to ' + data.sent + ' device(s).';
+      if (data.removed) text += ' Removed ' + data.removed + ' expired.';
+      if (data.failed) text += ' ' + data.failed + ' failed.';
+      show(text, true);
+      $('title').value = ''; $('message').value = ''; $('url').value = '';
+    } catch (e) {
+      show(e.message === 'Failed to fetch' ? 'Could not reach the server. Is server.py running and Tailscale up?' : e.message, false);
+    } finally {
+      sendBtn.disabled = false; sendBtn.textContent = 'Send notification';
+    }
+  });
+</script>
+</body>
+</html>
